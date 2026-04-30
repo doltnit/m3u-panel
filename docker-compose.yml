@@ -1,0 +1,13 @@
+services:
+  m3u-panel:
+    build: .
+    ports:
+      - "8084:80"
+    volumes:
+      - ./data/channels.db:/var/www/html/channels.db
+      - ./data/cache:/var/www/html/cache
+    environment:
+      - PANEL_USER=admin
+      - PANEL_PASS=changeme
+      - TZ=Europe/Warsaw
+    restart: unless-stopped

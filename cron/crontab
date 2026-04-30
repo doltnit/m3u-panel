@@ -1,0 +1,8 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Co 30 minut odświeżaj streamy
+*/30 * * * * www-data php /var/www/html/update.php >> /var/log/m3u-update.log 2>&1
+
+# Raz dziennie aktualizuj yt-dlp
+0 4 * * * root /usr/local/bin/yt-dlp -U >> /var/log/m3u-update.log 2>&1

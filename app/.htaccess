@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Blokuj bezpośredni dostęp do plików cache i bazy danych
+RewriteRule ^cache/ - [F,L]
+RewriteRule ^channels\.db$ - [F,L]
+RewriteRule ^update\.log$ - [F,L]
+RewriteRule ^update\.php$ - [F,L]
+
+# Ładne URLe dla m3u
+RewriteRule ^([a-zA-Z0-9_-]+)\.m3u$ m3u.php?slug=$1 [L]
