@@ -18,6 +18,9 @@ RUN curl -sSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
 # PHP extensions
 RUN docker-php-ext-install pdo pdo_sqlite
 
+# PHP timezone – musi być ustawione w php.ini, TZ env nie wystarczy
+RUN echo "date.timezone = Europe/Warsaw" > /usr/local/etc/php/conf.d/timezone.ini
+
 # Apache: mod_rewrite + AllowOverride
 RUN a2enmod rewrite
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
@@ -27,8 +30,7 @@ RUN mkdir -p /var/lib/php/sessions && chmod 777 /var/lib/php/sessions
 
 # Cron job
 COPY cron/crontab /etc/cron.d/m3u-cron
-RUN chmod 0644 /etc/cron.d/m3u-cron \
-    && crontab /etc/cron.d/m3u-cron
+RUN chmod 0644 /etc/cron.d/m3u-cron
 
 # App files
 COPY app/ /var/www/html/

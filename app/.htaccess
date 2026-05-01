@@ -1,10 +1,27 @@
+DirectoryIndex index.php
+
+# Blokuj dostęp do wrażliwych plików
+<Files "channels.db">
+    Require all denied
+</Files>
+<Files "auth.php">
+    Require all denied
+</Files>
+<Files "update.php">
+    Require all denied
+</Files>
+<Files "backup_cron.php">
+    Require all denied
+</Files>
+<FilesMatch "\.log$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.cache$|\.videoid$">
+    Require all denied
+</FilesMatch>
+
+# Blokuj katalog backupów przez HTTP (pobieranie tylko przez backup.php)
 RewriteEngine On
-
-# Blokuj bezpośredni dostęp do plików cache i bazy danych
+RewriteRule ^backups/ - [F,L]
 RewriteRule ^cache/ - [F,L]
-RewriteRule ^channels\.db$ - [F,L]
-RewriteRule ^update\.log$ - [F,L]
-RewriteRule ^update\.php$ - [F,L]
-
-# Ładne URLe dla m3u
 RewriteRule ^([a-zA-Z0-9_-]+)\.m3u$ m3u.php?slug=$1 [L]

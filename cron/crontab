@@ -2,7 +2,13 @@ SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Co 30 minut odświeżaj streamy
-*/30 * * * * www-data php /var/www/html/update.php >> /var/log/m3u-update.log 2>&1
+*/30 * * * * root su -s /bin/bash www-data -c "php /var/www/html/update.php" >> /var/log/m3u-update.log 2>&1
 
 # Raz dziennie aktualizuj yt-dlp
 0 4 * * * root /usr/local/bin/yt-dlp -U >> /var/log/m3u-update.log 2>&1
+
+# Codziennie o 2:00 – automatyczny backup bazy
+0 2 * * * root su -s /bin/bash www-data -c "php /var/www/html/backup_cron.php" >> /var/log/m3u-update.log 2>&1
+
+# Co poniedziałek o 3:00 – rotacja logów
+0 3 * * 1 root cp /var/log/m3u-update.log /var/log/m3u-update.log.$(date +\%Y\%m\%d) && truncate -s 0 /var/log/m3u-update.log && find /var/log -name 'm3u-update.log.*' -mtime +7 -delete

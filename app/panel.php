@@ -217,6 +217,7 @@ if (isset($_GET['msg'])) { $flashMsg = $_GET['msg']; $flashType = $_GET['type'] 
 $editId   = isset($_GET['edit']) ? (int)$_GET['edit'] : 0;
 $channels = $db->query("SELECT * FROM channels ORDER BY position ASC")->fetchAll(PDO::FETCH_ASSOC);
 $self     = htmlspecialchars($_SERVER['PHP_SELF']);
+$view     = $_GET['view'] ?? 'channels';
 ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -679,6 +680,51 @@ html, body {
                 stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .m3u-copied { color: var(--em) !important; border-color: var(--em-b) !important; }
 
+/* Nav tabs */
+.topbar-nav { display: flex; gap: 2px; margin-left: 16px; }
+.nav-tab {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 600;
+  text-decoration: none; color: var(--ink3);
+  transition: background .15s, color .15s;
+}
+.nav-tab:hover { background: var(--surface2); color: var(--ink2); }
+.nav-tab.active { background: var(--ind-l); color: var(--ind-mid); }
+.nav-tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none;
+               stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Log viewer */
+.log-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 80px; }
+.log-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); box-shadow: var(--sh); overflow: hidden;
+}
+.log-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.log-toolbar-title { font-size: 14px; font-weight: 700; color: var(--ink); flex: 1; }
+.log-lines {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 14px 16px;
+  background: #0d1117;
+  color: #c9d1d9;
+  height: 600px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.log-line-ok     { color: #3fb950; }
+.log-line-err    { color: #f85149; }
+.log-line-warn   { color: #d29922; }
+.log-line-info   { color: #79c0ff; }
+.log-line-sep    { color: #484f58; }
+.log-empty { color: #484f58; font-style: italic; }
+
 /* Desktop font scaling */
 @media (min-width: 900px) {
   html, body { font-size: 15px; }
@@ -696,6 +742,20 @@ html, body {
     </div>
     <span class="topbar-name">M3U Panel</span>
   </div>
+  <nav class="topbar-nav">
+    <a href="panel.php" class="nav-tab <?= ($view !== 'logs') ? 'active' : '' ?>">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Kanały
+    </a>
+    <a href="panel.php?view=logs" class="nav-tab <?= ($view === 'logs') ? 'active' : '' ?>">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Logi
+    </a>
+    <a href="backup.php" class="nav-tab">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Backup
+    </a>
+  </nav>
   <div style="display:flex;align-items:center;gap:10px">
     <span class="topbar-time"><?= date('d.m.Y  H:i') ?></span>
     <a href="?logout=1" class="topbar-logout" title="Wyloguj się">
@@ -709,6 +769,80 @@ html, body {
 </div>
 
 <div class="layout">
+
+<?php if ($view === 'logs'): ?>
+<?php
+  $logFile = '/var/log/m3u-update.log';
+  $lines = [];
+  if (file_exists($logFile)) {
+      $all = file($logFile, FILE_IGNORE_NEW_LINES);
+      $lines = array_slice($all, -500); // ostatnie 500 linii
+      $lines = array_reverse($lines);   // najnowsze na górze
+  }
+  // Znajdź archiwalne pliki logów
+  $archives = glob('/var/log/m3u-update.log.*');
+  rsort($archives);
+?>
+</div><!-- /layout zamknij bo log ma własny wrapper -->
+<div class="log-wrap">
+  <div class="log-card">
+    <div class="log-toolbar">
+      <span class="log-toolbar-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        update.log
+        <span style="font-weight:400;color:var(--ink3);font-size:12px;margin-left:6px">(ostatnie 500 linii)</span>
+      </span>
+      <?php if (!empty($archives)): ?>
+      <select onchange="if(this.value) window.location='panel.php?view=logs&arch='+this.value"
+              style="font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:var(--surface2);color:var(--ink2);cursor:pointer">
+        <option value="">Bieżący log</option>
+        <?php foreach ($archives as $arch): ?>
+        <option value="<?= htmlspecialchars(basename($arch)) ?>"
+                <?= (($_GET['arch'] ?? '') === basename($arch)) ? 'selected' : '' ?>>
+          <?= htmlspecialchars(basename($arch)) ?>
+        </option>
+        <?php endforeach; ?>
+      </select>
+      <?php endif; ?>
+      <a href="panel.php?view=logs" class="abtn abtn-ghost" style="font-size:12px;padding:5px 10px;min-height:auto;text-decoration:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Odśwież
+      </a>
+    </div>
+    <div class="log-lines" id="logbox">
+<?php
+  // Jeśli wybrano archiwum
+  $archFile = '';
+  if (!empty($_GET['arch'])) {
+      $archFile = '/var/log/' . basename($_GET['arch']);
+      if (file_exists($archFile)) {
+          $all = file($archFile, FILE_IGNORE_NEW_LINES);
+          $lines = array_reverse($all);
+      }
+  }
+
+  if (empty($lines)): ?>
+      <span class="log-empty">Brak wpisów w logu.</span>
+<?php else:
+    foreach ($lines as $line):
+        $line = htmlspecialchars($line);
+        $cls = 'log-line-info';
+        if (str_contains($line, 'OK:') || str_contains($line, 'żyje') || str_contains($line, 'KONIEC'))
+            $cls = 'log-line-ok';
+        elseif (str_contains($line, 'ERROR') || str_contains($line, 'EXCEPTION') || str_contains($line, 'BŁĄD'))
+            $cls = 'log-line-err';
+        elseif (str_contains($line, 'WARN') || str_contains($line, 'BRAK') || str_contains($line, 'nie jest już'))
+            $cls = 'log-line-warn';
+        elseif (str_contains($line, '==='))
+            $cls = 'log-line-sep';
+        echo '<span class="' . $cls . '">' . $line . "</span>\n";
+    endforeach;
+endif; ?>
+    </div>
+  </div>
+</div>
+
+<?php else: /* widok kanałów */ ?>
 
 <?php if ($flashMsg): ?>
 <div class="flash <?= $flashType === 'success' ? 'flash-ok' : 'flash-err' ?>" style="grid-column:1/-1">
@@ -728,7 +862,7 @@ html, body {
     <form method="post">
       <label class="field-label">Nazwa</label>
       <input class="field-input" type="text" name="name" placeholder="TVN24" required>
-      <label class="field-label">Slug</label>
+      <label class="field-label">Nazwa URL</label>
       <input class="field-input" type="text" name="slug" placeholder="tvn24" required>
       <label class="field-label">Kanał YouTube</label>
       <input class="field-input" type="text" name="yt_channel" placeholder="@tvn24" required>
@@ -787,7 +921,7 @@ html, body {
     </div>
 
     <div class="cmeta">
-      <div class="mrow"><span class="mkey">slug</span><span class="mval"><?= htmlspecialchars($ch['slug']) ?></span></div>
+      <div class="mrow"><span class="mkey">URL</span><span class="mval"><?= htmlspecialchars($ch['slug']) ?></span></div>
       <div class="mrow"><span class="mkey">kw</span><span class="mval"><?= htmlspecialchars($ch['keyword']) ?></span></div>
       <div class="mrow"><span class="mkey">yt</span><span class="mval"><?= htmlspecialchars($ch['yt_channel']) ?></span></div>
     </div>
@@ -847,7 +981,7 @@ html, body {
       <input type="hidden" name="id" value="<?= $ch['id'] ?>">
       <label class="field-label">Nazwa</label>
       <input class="field-input" type="text" name="name" value="<?= htmlspecialchars($ch['name']) ?>" required>
-      <label class="field-label">Slug</label>
+      <label class="field-label">Nazwa URL</label>
       <input class="field-input" type="text" name="slug" value="<?= htmlspecialchars($ch['slug']) ?>" required>
       <label class="field-label">Kanał YouTube</label>
       <input class="field-input" type="text" name="yt_channel" value="<?= htmlspecialchars($ch['yt_channel']) ?>" required>
@@ -912,5 +1046,6 @@ function fallbackCopy(btn, url) {
   }
 }
 </script>
+<?php endif; /* widok kanałów */ ?>
 </body>
 </html>

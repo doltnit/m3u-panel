@@ -6,6 +6,8 @@ services:
     volumes:
       - ./data/channels.db:/var/www/html/channels.db
       - ./data/cache:/var/www/html/cache
+      - ./data/backups:/var/www/html/backups
+      - ./data/backups:/var/backups/m3u-panel
     environment:
       - PANEL_USER=admin
       - PANEL_PASS=changeme
