@@ -11,7 +11,7 @@ $logFile = '/var/log/m3u-update.log';
 // nawet jeśli stary URL nadal odpowiada (bo może wygasnąć w trakcie oglądania)
 define('CACHE_MAX_AGE_MIN', 240);
 
-function log_msg(string $msg, string $logFile, bool $echo = true): void {
+function log_msg(string $msg, string $logFile, bool $echo = false): void {
     $line = "[" . date('Y-m-d H:i:s') . "] {$msg}\n";
     file_put_contents($logFile, $line, FILE_APPEND);
     if ($echo) echo $line;
